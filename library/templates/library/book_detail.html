@@ -5,25 +5,28 @@
 {% block content %}
 {% include 'library/header.html' %}
 <h2>{{ book.title }}</h2>
-<p>Автор: {{ author.first.name }} {{ author.last.name }}</p>
+<p>Автор: {{ book.author.first_name }} {{ book.author.last_name }}</p>
 <p>Дата публикации: {{ book.publication_date|date:"d M Y" }}</p>
+<p>Количество книг автора: {{ author_books_count }}</p>
+<p>Средний рейтинг: {{ average_rating }}</p>
+<p>Популярная: {{ is_popular|yesno:"Да,Нет" }}</p>
+<a href="{% url 'library:book_update' book.pk %}" class="btn btn-secondary">Редактировать</a>
+<a href="{% url 'library:book_delete' book.pk %}" class="btn btn-danger">Удалить</a>
+<a href="{% url 'library:books_list' %}" class="btn btn-primary">Вернуться к списку</a>
+
+{% if 'library.can_review_book' in perms %}
+    <form action="{% url 'library:book_review' book.pk %}" method="post">
+        {% csrf_token %}
+        <textarea name="review" placeholder="Напишите рецензию"></textarea>
+        <button type="submit">Рецензировать</button>
+    </form>
+{% endif %}
+
+{% if 'library.can_recommend_book' in perms %}
+    <form action="{% url 'library:book_recommend' book.pk %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Рекомендовать</button>
+    </form>
+{% endif %}
+
 {% endblock %}
-
-<!--<!DOCTYPE html>-->
-<!--<html lang="en">-->
-<!--<head>-->
-<!--    <meta charset="UTF-8">-->
-<!--    <title>Список книг</title>-->
-<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
-<!--    <link rel="stylesheet" href="/static/css/bootstrap.min.css">-->
-<!--</head>-->
-<!--<body>-->
-<!--    <div class="container mt-5">-->
-<!--        <h1 class="mb-4">{{ book.title }}</h1>-->
-<!--        <p>Автор: {{ author.first.name }} {{ author.last.name }}</p>-->
-<!--        <p>Дата публикации: {{ book.publication_date|date:"d M Y" }}</p>-->
-<!--    </div>-->
-
-<!--<script src="/static/js/bootstrap.bundle.min.js"></script>-->
-<!--</body>-->
-<!--</html>-->

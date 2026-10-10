@@ -8,32 +8,8 @@
 <ul class="list-group">
     {% for book in books %}
         <li class="list-group-item">
-            {{ book.title }} - {{ book.publication_date|date:"d M Y" }} - {{ book.author.first_name }} {{ book.author.last_name }}
+            <a href="{% url 'library:book_detail' book.pk %}">{{ book.title }}</a> - {{ book.publication_date|date:"d M Y" }} - {{ book.author.first_name }} {{ book.author.last_name }}
         </li>
     {% endfor %}
 </ul>
 {% endblock %}
-
-<!--<!DOCTYPE html>-->
-<!--<html lang="en">-->
-<!--<head>-->
-<!--    <meta charset="UTF-8">-->
-<!--    <title>Список книг</title>-->
-<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
-<!--    <link rel="stylesheet" href="/static/css/bootstrap.min.css">-->
-<!--</head>-->
-<!--<body>-->
-<!--    <div class="container mt-5">-->
-<!--        <h1 class="mb-4">Список книг</h1>-->
-<!--        <ul class="list-group">-->
-<!--            {% for book in books %}-->
-<!--                <li class="list-group-item">-->
-<!--                    {{ book.title }} - {{ book.publication_date|date:"d M Y" }} - {{ book.author.first_name }} {{ book.author.last_name }}-->
-<!--                </li>-->
-<!--            {% endfor %}-->
-<!--        </ul>-->
-<!--    </div>-->
-
-<!--    <script src="/static/js/bootstrap.bundle.min.js"></script>-->
-<!--</body>-->
-<!--</html>-->

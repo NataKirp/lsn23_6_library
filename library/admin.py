@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Author, Book
+from .models import Author, Book, Review
 
 
 @admin.register(Author)
@@ -14,6 +14,12 @@ class BookAdmin(admin.ModelAdmin):
     list_display = ('title', 'publication_date', 'author')
     list_filter = ('publication_date', 'author')
     search_fields = ('title', 'author__first_name', 'author__last_name')
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('book', 'rating',)
+
 
 # В Django, когда ты используешь двойное подчеркивание (__) в строках, как в 'author__first_name' и 'author__last_name',
 # это называется "переход через отношения".
