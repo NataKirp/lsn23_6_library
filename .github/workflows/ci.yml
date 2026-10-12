@@ -98,11 +98,14 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Deploy to Server
+      - name: Deploy to Server with Docker Compose
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/library:${{ github.sha }}
-            docker stop library || true
-            docker rm library || true
-            docker run -d --name library -p 80:8000 ${{ secrets.DOCKER_HUB_USERNAME }}/library:${{ github.sha }}
+            set -e
+            cd ~/library
+            git pull origin main
+            docker compose pull web
+            docker compose up -d --build
+            docker compose exec -T web python manage.py migrate --noinput
+            docker compose exec -T web python manage.py collectstatic --noinput
           EOF
