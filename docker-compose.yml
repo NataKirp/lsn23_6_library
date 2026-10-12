@@ -7,10 +7,13 @@ services:
     expose:
       - "8000"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       - ./.env
+    restart: unless-stopped
 
   nginx:
     build:
@@ -22,6 +25,7 @@ services:
       - static_volume:/app/staticfiles
     depends_on:
       - web
+    restart: unless-stopped
 
   db:
     image: postgres:16
@@ -29,6 +33,13 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - ./.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
 
   redis:
     image: redis:7
@@ -36,6 +47,12 @@ services:
       - redis_data:/data
     env_file:
       - ./.env
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   postgres_data:
