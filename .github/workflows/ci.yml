@@ -68,9 +68,6 @@ jobs:
           poetry config virtualenvs.create false
           poetry install --no-root
 
-      - name: Run migrations
-        run: python manage.py migrate
-
       - name: Run tests
         run: python manage.py test
 
