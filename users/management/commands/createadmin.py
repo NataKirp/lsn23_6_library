@@ -6,21 +6,30 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # метод get_user_model() возвращает кастомную модель пользователя, которая указана
         # в настройках AUTH_USER_MODEL в config/settings.py
-        User = get_user_model() #  получаем саму модель пользователя
+        #  получаем саму модель пользователя
+        User = get_user_model()
+        #  создаем конкретный экземпляр модели пользователя
         user = User.objects.create(
-            email='testadmin@sky.pro',
-            first_name='Admin',
-            last_name='Admin',
-        )                               #  создаем конкретный экземпляр модели пользователя
+            email="testadmin@sky.pro",
+            first_name="Admin",
+            last_name="Admin",
+        )
+        # метод используется для хеширования пароля перед его сохранением.
+        user.set_password(
+            "1234"
+        )
 
-        user.set_password('1234') # метод используется для хеширования пароля перед его сохранением.
-
-        user.is_staff=True
-        user.is_superuser=True
+        user.is_staff = True
+        user.is_superuser = True
 
         user.save()
 
-        self.stdout.write(self.style.SUCCESS(f'Successfully created admin user with email {user.email}!'))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Successfully created admin user with email {user.email}!"
+            )
+        )
+
 
 # более подходящий вариант, но не сработает, тк.  кастомный UserManager в проекте не переопределяет
 # метод create_superuser — используется стандартный менеджер Django, который обязательно требует username первым

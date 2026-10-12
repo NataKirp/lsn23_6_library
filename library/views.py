@@ -1,18 +1,16 @@
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import (LoginRequiredMixin,
+                                        PermissionRequiredMixin)
+from django.core.cache import cache
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
-
-from library.forms import BookForm, AuthorForm
-from library.models import Book, Author
-
-from django.views.generic import ListView, DetailView, View
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
-
-from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-from django.core.cache import cache
+from django.views.decorators.cache import cache_page
+from django.views.generic import DetailView, ListView, View
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
+from library.forms import AuthorForm, BookForm
+from library.models import Author, Book
 from library.services import BookService
 
 
@@ -20,73 +18,73 @@ class ReviewBookView(LoginRequiredMixin, View):
     def post(self, request, pk):
         book = get_object_or_404(Book, id=pk)
 
-        if not request.user.has_perm('library.can_review_book'):
-            return HttpResponseForbidden('У вас нет права для рецензирования книги.')
+        if not request.user.has_perm("library.can_review_book"):
+            return HttpResponseForbidden("У вас нет права для рецензирования книги.")
 
-        book.review = request.POST.get('review')
+        book.review = request.POST.get("review")
         book.save()
 
-        return redirect('library:book_detail', pk=pk)
+        return redirect("library:book_detail", pk=pk)
 
 
 class RecommendBookView(LoginRequiredMixin, View):
     def post(self, request, pk):
         book = get_object_or_404(Book, id=pk)
 
-        if not request.user.has_perm('library.can_recommend_book'):
-            return HttpResponseForbidden('У вас нет права для рекомендации книги.')
+        if not request.user.has_perm("library.can_recommend_book"):
+            return HttpResponseForbidden("У вас нет права для рекомендации книги.")
 
         book.recommend = True
         book.save()
 
-        return redirect('library:book_detail', pk=pk)
+        return redirect("library:book_detail", pk=pk)
 
 
 class AuthorListView(ListView):
     model = Author
-    template_name = 'library/authors_list.html'
-    context_object_name = 'authors'
+    template_name = "library/authors_list.html"
+    context_object_name = "authors"
 
     def get_queryset(self):
         # альтернативный вариант см. в конце *
-        queryset = cache.get('authors_queryset')
+        queryset = cache.get("authors_queryset")
         if not queryset:
             queryset = super().get_queryset()
-            cache.set('authors_queryset', queryset, 60 * 15)
+            cache.set("authors_queryset", queryset, 60 * 15)
         return queryset
 
 
 class AuthorCreateView(CreateView):
     model = Author
     form_class = AuthorForm
-    template_name = 'library/author_form.html'
-    title = 'Добавить автора'
-    success_url = reverse_lazy('library:authors_list')
+    template_name = "library/author_form.html"
+    title = "Добавить автора"
+    success_url = reverse_lazy("library:authors_list")
 
 
 class AuthorUpdateView(UpdateView):
     model = Author
     form_class = AuthorForm
-    template_name = 'library/author_form.html'
-    title = 'Редактировать автора'
-    success_url = reverse_lazy('library:authors_list')
+    template_name = "library/author_form.html"
+    title = "Редактировать автора"
+    success_url = reverse_lazy("library:authors_list")
 
 
 class BookCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Book
     form_class = BookForm
     # fields = ['title', 'publication_date', 'author']
-    template_name = 'library/book_form.html'
-    title = 'Добавить книгу'
-    success_url = reverse_lazy('library:books_list')
-    permission_required = 'library.add_book'
+    template_name = "library/book_form.html"
+    title = "Добавить книгу"
+    success_url = reverse_lazy("library:books_list")
+    permission_required = "library.add_book"
 
 
-@method_decorator(cache_page(60 * 15), name='dispatch')
+@method_decorator(cache_page(60 * 15), name="dispatch")
 class BooksListView(LoginRequiredMixin, ListView):
     model = Book
-    template_name = 'library/books_list.html'
-    context_object_name = 'books'
+    template_name = "library/books_list.html"
+    context_object_name = "books"
     # permission_required = 'library.view_book'
 
     def get_queryset(self):
@@ -98,18 +96,20 @@ class BooksListView(LoginRequiredMixin, ListView):
 # @method_decorator(cache_page(60 * 15), name='dispatch')
 class BookDetailView(LoginRequiredMixin, DetailView):
     model = Book
-    template_name = 'library/book_detail.html'
-    context_object_name = 'book'
+    template_name = "library/book_detail.html"
+    context_object_name = "book"
 
     def get_context_data(self, **kwargs):
         # Получаем стандартный контекст данных из родительского класса
         context = super().get_context_data(**kwargs)
-        context['author_books_count'] = Book.objects.filter(author=self.object.author).count()
+        context["author_books_count"] = Book.objects.filter(
+            author=self.object.author
+        ).count()
         # Получаем ID книги из объекта
         book_id = self.object.id
         # Добавляем в контекст средний рейтинг и статус популярности книги
-        context['average_rating'] = BookService.calculate_average_rating(book_id)
-        context['is_popular'] = BookService.is_popular(book_id)
+        context["average_rating"] = BookService.calculate_average_rating(book_id)
+        context["is_popular"] = BookService.is_popular(book_id)
 
         return context
 
@@ -118,23 +118,24 @@ class BookUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Book
     form_class = BookForm
     # fields = ['title', 'publication_date', 'author']
-    template_name = 'library/book_form.html'
-    title = 'Редактировать книгу'
-    success_url = reverse_lazy('library:books_list')
-    permission_required = 'library.change_book'
+    template_name = "library/book_form.html"
+    title = "Редактировать книгу"
+    success_url = reverse_lazy("library:books_list")
+    permission_required = "library.change_book"
 
 
 class BookDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Book
-    template_name = 'library/book_confirm_delete.html'
-    success_url = reverse_lazy('library:books_list')
-    permission_required = 'library.delete_book'
+    template_name = "library/book_confirm_delete.html"
+    success_url = reverse_lazy("library:books_list")
+    permission_required = "library.delete_book"
 
 
 # * В предоставленном коде находится критическая логическая ошибка, из-за которой кеширование не работает,
 # а нагрузка на базу данных только увеличивается. Главная проблема: кеширование «ленивого» QuerySet
 # В Django метод super().get_queryset() возвращает объект QuerySet, который является ленивым.
-# Это значит, что код программы не выполняет реальный запрос в базу данных (SQL) в момент вызова super().get_queryset().
+# Это значит, что код программы не выполняет реальный запрос в базу данных (SQL) в момент вызова
+# super().get_queryset().
 # Он лишь создаёт объект-конструктор запроса. Когда выполняется инструкция:
 # cache.set('authors_queryset', queryset, 60 * 15)
 # в Django-кеш (Redis, Memcached или MemBase) сохраняется и сериализуется не результат запроса (список авторов),
@@ -193,20 +194,21 @@ class BookDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 # def clear_authors_cache(sender, **kwargs):
 #     cache.delete('authors_queryset')
 #
-# Проверка на None: В исходном коде написано if not queryset:. Если из базы вернется пустой список авторов (база чистая),
-# if not queryset сработает как True, и код будет дергать базу данных при каждом запросе, пытаясь переписать кеш.
+# Проверка на None: В исходном коде написано if not queryset:. Если из базы вернется пустой список авторов
+# (база чистая), if not queryset сработает как True, и код будет дергать базу данных при каждом запросе,
+# пытаясь переписать кеш.
 # Правильнее проверять строго: if queryset is None:.
 #
 #
 # ** В этом коде есть одна критическая архитектурная ошибка, связанная с кэшированием, и одна скрытая проблема
 # производительности (лишний запрос), завязанная на ленивых объектах.
 # Ошибка №1: Кэширование LoginRequiredMixin ломает безопасность
-# Вы применили @method_decorator(cache_page(...), name='dispatch') ко всему классу. Метод dispatch управляет вообще всем
-# жизненным циклом запроса, включая проверку авторизации.
+# Вы применили @method_decorator(cache_page(...), name='dispatch') ко всему классу. Метод dispatch управляет вообще
+# всем жизненным циклом запроса, включая проверку авторизации.
 # Что произойдет на практике:Первый (авторизованный) пользователь заходит на страницу книги. Django генерирует страницу
 # и сохраняет её в кэш. Второй пользователь (аноним, который даже не вошел на сайт) заходит по этой же ссылке.
-# Django видит закэшированную страницу на уровне dispatch и отдает её анониму, полностью проигнорировав LoginRequiredMixin!
-# Анонимный пользователь увидит закрытые данные.
+# Django видит закэшированную страницу на уровне dispatch и отдает её анониму,
+# полностью проигнорировав LoginRequiredMixin! Анонимный пользователь увидит закрытые данные.
 #
 # Правило: Никогда не кэшируйте через cache_page представления, которые отдают разный контент для разных пользователей
 # или защищены миксинами авторизации. cache_page отлично подходит только для публичных страниц.
@@ -214,16 +216,18 @@ class BookDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 # Проблема №2: Скрытый ленивый запрос в get_context_data
 # Посмотрите на эту строчку:
 # context['author_books_count'] = Book.objects.filter(author=self.object.author).count()
-# Здесь self.object — это текущая книга. Когда вы вызываете self.object.author, Django видит, что объект author является
-# связанным по ForeignKey. Так как изначально при получении книги автор не подгружался, Django в этот самый момент
-# делает дополнительный ленивый запрос в таблицу авторов, чтобы просто взять его id. И только после этого выполняется
-# запрос .count(). Это классический лишний шаг.
+# Здесь self.object — это текущая книга. Когда вы вызываете self.object.author, Django видит, что объект author
+# является связанным по ForeignKey. Так как изначально при получении книги автор не подгружался, Django в этот самый
+# момент делает дополнительный ленивый запрос в таблицу авторов, чтобы просто взять его id. И только после этого
+# выполняется запрос .count(). Это классический лишний шаг.
 #
 # Как сделать код идеальным?
 #
 # Вариант 1. Если страница одинаковая для всех, но нужна авторизация (Правильное кэширование)
-# Если контент страницы не зависит от того, какой именно пользователь на нее смотрит (нет надписей вроде "Привет, Иван!"),
-# то вместо кэширования всей страницы (cache_page) лучше закэшировать только тяжелые данные или сам шаблон (Fragment Caching).
+# Если контент страницы не зависит от того, какой именно пользователь на нее смотрит
+# (нет надписей вроде "Привет, Иван!"),
+# то вместо кэширования всей страницы (cache_page) лучше закэшировать только тяжелые данные или сам шаблон
+# (Fragment Caching).
 # Но если вы хотите оставить именно постраничный кэш, нужно переписать код так, чтобы кэш учитывал статус пользователя
 # или вынести кэширование внутрь метода get:
 #
@@ -253,9 +257,9 @@ class BookDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 #
 # Вариант 2. Если на странице есть личные данные пользователя (Кэширование шаблона)
 #
-# Если на странице отображается имя пользователя, его корзина или кнопка "Добавить в избранное", кэшировать всю страницу
-# нельзя вообще. Уберите декоратор @method_decorator(cache_page...) из Python-кода и закэшируйте тяжелый блок прямо в
-# HTML-шаблоне book_detail.html:html{% load cache %}
+# Если на странице отображается имя пользователя, его корзина или кнопка "Добавить в избранное", кэшировать всю
+# страницу нельзя вообще. Уберите декоратор @method_decorator(cache_page...) из Python-кода и закэшируйте тяжелый блок
+# прямо в HTML-шаблоне book_detail.html:html{% load cache %}
 #
 # <!-- Этот блок уникален для каждого, его не кэшируем -->
 # <div class="user-header">Привет, {{ request.user.username }}</div>
